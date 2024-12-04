@@ -1,141 +1,376 @@
-:::::::::::::::::::::::::::::::::::::::::::: container
-# AI Text Detector
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AI Text Detector</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .input-group {
+            margin-bottom: 20px;
+        }
+        select {
+            width: 100%;
+            padding: 8px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: white;
+        }
+        textarea {
+            width: 100%;
+            height: 200px;
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            resize: vertical;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .results {
+            margin-top: 20px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            display: none;
+        }
+        .warning {
+            background-color: #fff3cd;
+            color: #856404;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            display: none;
+        }
+        .classification-container {
+            display: flex;
+            justify-content: space-between;
+            margin: 20px 0;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+        }
+        .classification-option {
+            text-align: center;
+            padding: 10px 20px;
+            border-radius: 4px;
+            opacity: 0.3;
+            transition: all 0.3s ease;
+        }
+        .mostly-human {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+        }
+        .ai-assisted {
+            background-color: #fff3e0;
+            color: #f57c00;
+        }
+        .ai-written {
+            background-color: #ffebee;
+            color: #c62828;
+        }
+        .active {
+            opacity: 1;
+            transform: scale(1.05);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .metric {
+            margin: 15px 0;
+            padding: 10px;
+            border-radius: 4px;
+            background-color: #f8f9fa;
+        }
+        .metric-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+        .metric-name {
+            display: flex;
+            align-items: center;
+            font-weight: bold;
+        }
+        .metric-weight {
+            font-size: 0.8em;
+            color: #666;
+            margin-left: 8px;
+            background-color: #e9ecef;
+            padding: 2px 6px;
+            border-radius: 3px;
+        }
+        .metric-value {
+            font-size: 0.9em;
+            color: #666;
+            background: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .metric-description {
+            font-size: 0.9em;
+            color: #666;
+            margin: 5px 0;
+            font-style: italic;
+        }
+        .meter {
+            height: 20px;
+            background-color: white;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 5px;
+        }
+        .meter-fill {
+            height: 100%;
+            background-color: #007bff;
+            transition: width 0.3s ease;
+        }
+        .scores {
+            text-align: center;
+            font-size: 1.1em;
+            margin: 15px 0;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+        .score-item {
+            display: inline-block;
+            margin: 0 15px;
+            padding: 5px 15px;
+            background-color: white;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .text-stats {
+            color: #666;
+            font-size: 0.9em;
+            margin: 15px 0;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>AI Text Detector</h1>
+        <div class="input-group">
+            <label for="content-type">Content Type:</label>
+            <select id="content-type">
+                <option value="general">General Text</option>
+                <option value="email">Email</option>
+                <option value="poem">Poetry</option>
+            </select>
+        </div>
+        <p>Paste your text below to analyze its AI characteristics:</p>
+        <textarea id="text-input" placeholder="Enter text here..."></textarea>
+        <button onclick="analyzeText()">Analyze Text</button>
+        
+        <div id="warning" class="warning"></div>
+        
+        <div id="results" class="results">
+            <div class="classification-container">
+                <div class="classification-option mostly-human" id="mostly-human">
+                    MOSTLY HUMAN
+                </div>
+                <div class="classification-option ai-assisted" id="ai-assisted">
+                    AI-ASSISTED
+                </div>
+                <div class="classification-option ai-written" id="ai-written">
+                    AI-WRITTEN
+                </div>
+            </div>
+            
+            <div class="scores">
+                <div class="score-item">
+                    Total Score: <span id="total-score">0.0/10</span>
+                </div>
+                <div class="score-item">
+                    Confidence: <span id="confidence">0%</span>
+                </div>
+            </div>
+            
+            <div class="text-stats">
+                <span id="word-count">Words: 0</span> | <span id="sentence-count">Sentences: 0</span>
+            </div>
+            
+            <h3>Detailed Metrics:</h3>
+            <div class="metric">
+                <div class="metric-header">
+                    <div class="metric-name">
+                        Marker Density
+                        <span class="metric-weight" id="marker-density-weight">0%</span>
+                    </div>
+                    <span class="metric-value" id="marker-density-value">0%</span>
+                </div>
+                <div class="metric-description">
+                    Measures the presence of common AI writing patterns and phrases
+                </div>
+                <div class="meter">
+                    <div id="marker-density" class="meter-fill"></div>
+                </div>
+            </div>
+            <div class="metric">
+                <div class="metric-header">
+                    <div class="metric-name">
+                        Sentence Uniformity
+                        <span class="metric-weight" id="sentence-uniformity-weight">0%</span>
+                    </div>
+                    <span class="metric-value" id="sentence-uniformity-value">0%</span>
+                </div>
+                <div class="metric-description">
+                    Analyzes how similar sentence lengths are throughout the text
+                </div>
+                <div class="meter">
+                    <div id="sentence-uniformity" class="meter-fill"></div>
+                </div>
+            </div>
+            <div class="metric">
+                <div class="metric-header">
+                    <div class="metric-name">
+                        Vocabulary Diversity
+                        <span class="metric-weight" id="vocabulary-diversity-weight">0%</span>
+                    </div>
+                    <span class="metric-value" id="vocabulary-diversity-value">0%</span>
+                </div>
+                <div class="metric-description">
+                    Measures the variety and richness of word choice
+                </div>
+                <div class="meter">
+                    <div id="vocabulary-diversity" class="meter-fill"></div>
+                </div>
+            </div>
+            <div class="metric">
+                <div class="metric-header">
+                    <div class="metric-name">
+                        Flow Naturalness
+                        <span class="metric-weight" id="flow-naturalness-weight">0%</span>
+                    </div>
+                    <span class="metric-value" id="flow-naturalness-value">0%</span>
+                </div>
+                <div class="metric-description">
+                    Evaluates the natural flow and transition between sentences
+                </div>
+                <div class="meter">
+                    <div id="flow-naturalness" class="meter-fill"></div>
+                </div>
+            </div>
+            <div class="metric">
+                <div class="metric-header">
+                    <div class="metric-name">
+                        Complexity Variance
+                        <span class="metric-weight" id="complexity-variance-weight">0%</span>
+                    </div>
+                    <span class="metric-value" id="complexity-variance-value">0%</span>
+                </div>
+                <div class="metric-description">
+                    Analyzes variation in sentence complexity and word length
+                </div>
+                <div class="meter">
+                    <div id="complexity-variance" class="meter-fill"></div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-::: input-group
-Content Type: General Text Email Poetry
-:::
+    <script>
+        function analyzeText() {
+            const text = document.getElementById("text-input").value;
+            const contentType = document.getElementById("content-type").value;
+            
+            if (!text.trim()) {
+                alert("Please enter some text to analyze");
+                return;
+            }
 
-Paste your text below to analyze its AI characteristics:
+            fetch("/analyze", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ 
+                    text: text,
+                    context_type: contentType
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById("results").style.display = "block";
+                
+                // Handle warning
+                if (data.warning) {
+                    document.getElementById("warning").style.display = "block";
+                    document.getElementById("warning").textContent = data.warning;
+                } else {
+                    document.getElementById("warning").style.display = "none";
+                }
+                
+                // Reset all classification options
+                document.querySelectorAll(".classification-option").forEach(el => {
+                    el.classList.remove("active");
+                });
+                
+                // Activate the correct classification
+                const classification = data.classification.toLowerCase().replace(" ", "-");
+                document.getElementById(classification).classList.add("active");
+                
+                // Update scores
+                document.getElementById("total-score").textContent = 
+                    `${data.scores.raw_total.toFixed(1)}/10`;
+                document.getElementById("confidence").textContent = 
+                    (data.confidence * 100).toFixed(1) + "%";
 
-Analyze Text
+                // Update text stats
+                const stats = data.text_stats;
+                document.getElementById("word-count").textContent = 
+                    `Words: ${stats.words}`;
+                document.getElementById("sentence-count").textContent = 
+                    `Sentences: ${stats.sentences}`;
 
-::: {#warning .warning}
-:::
-
-::::::::::::::::::::::::::::::::::::::::: {#results .results}
-:::::: classification-container
-::: {#mostly-human .classification-option .mostly-human}
-MOSTLY HUMAN
-:::
-
-::: {#ai-assisted .classification-option .ai-assisted}
-AI-ASSISTED
-:::
-
-::: {#ai-written .classification-option .ai-written}
-AI-WRITTEN
-:::
-::::::
-
-::::: scores
-::: score-item
-Total Score: [0.0/10]{#total-score}
-:::
-
-::: score-item
-Confidence: [0%]{#confidence}
-:::
-:::::
-
-::: text-stats
-[Words: 0]{#word-count} \| [Sentences: 0]{#sentence-count}
-:::
-
-### Detailed Metrics:
-
-:::::::: metric
-:::: metric-header
-::: metric-name
-Marker Density [0%]{#marker-density-weight .metric-weight}
-:::
-
-[0%]{#marker-density-value .metric-value}
-::::
-
-::: metric-description
-Measures the presence of common AI writing patterns and phrases
-:::
-
-:::: meter
-::: {#marker-density .meter-fill}
-:::
-::::
-::::::::
-
-:::::::: metric
-:::: metric-header
-::: metric-name
-Sentence Uniformity [0%]{#sentence-uniformity-weight .metric-weight}
-:::
-
-[0%]{#sentence-uniformity-value .metric-value}
-::::
-
-::: metric-description
-Analyzes how similar sentence lengths are throughout the text
-:::
-
-:::: meter
-::: {#sentence-uniformity .meter-fill}
-:::
-::::
-::::::::
-
-:::::::: metric
-:::: metric-header
-::: metric-name
-Vocabulary Diversity [0%]{#vocabulary-diversity-weight .metric-weight}
-:::
-
-[0%]{#vocabulary-diversity-value .metric-value}
-::::
-
-::: metric-description
-Measures the variety and richness of word choice
-:::
-
-:::: meter
-::: {#vocabulary-diversity .meter-fill}
-:::
-::::
-::::::::
-
-:::::::: metric
-:::: metric-header
-::: metric-name
-Flow Naturalness [0%]{#flow-naturalness-weight .metric-weight}
-:::
-
-[0%]{#flow-naturalness-value .metric-value}
-::::
-
-::: metric-description
-Evaluates the natural flow and transition between sentences
-:::
-
-:::: meter
-::: {#flow-naturalness .meter-fill}
-:::
-::::
-::::::::
-
-:::::::: metric
-:::: metric-header
-::: metric-name
-Complexity Variance [0%]{#complexity-variance-weight .metric-weight}
-:::
-
-[0%]{#complexity-variance-value .metric-value}
-::::
-
-::: metric-description
-Analyzes variation in sentence complexity and word length
-:::
-
-:::: meter
-::: {#complexity-variance .meter-fill}
-:::
-::::
-::::::::
-:::::::::::::::::::::::::::::::::::::::::::::
-::::::::::::::::::::::::::::::::::::::::::::
+                // Update meters and their values
+                for (const [key, value] of Object.entries(data.details)) {
+                    const elementId = key.replace("_", "-");
+                    const meter = document.getElementById(elementId);
+                    const valueDisplay = document.getElementById(`${elementId}-value`);
+                    const weightDisplay = document.getElementById(`${elementId}-weight`);
+                    
+                    if (meter) {
+                        meter.style.width = `${value * 100}%`;
+                    }
+                    if (valueDisplay) {
+                        valueDisplay.textContent = `${(value * 100).toFixed(1)}%`;
+                    }
+                    if (weightDisplay && data.weights && key in data.weights) {
+                        weightDisplay.textContent = `${(data.weights[key] * 100).toFixed(0)}%`;
+                    }
+                }
+            })
+            .catch(error => {
+                console.error("Error:", error);
+                alert("An error occurred while analyzing the text");
+            });
+        }
+    </script>
+</body>
+</html>
