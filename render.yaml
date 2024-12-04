@@ -2,9 +2,13 @@ services:
   - type: web
     name: ai-text-detector
     runtime: python
-    buildCommand: "pip install -r requirements.txt"
-    startCommand: "gunicorn app:app"
+    buildCommand: |
+      python -m pip install --upgrade pip
+      pip install -r requirements.txt
+    startCommand: "python -m gunicorn app:app"
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.0
+      - key: PATH
+        value: /opt/render/project/src/.venv/bin:/opt/render/project/src/bin:/opt/render/project/.local/bin:/opt/render/project/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
     plan: free
